@@ -29,5 +29,19 @@ let tests =
             }
             Expect.equal actual (Some 1) "Expected the first value to be returned."
         }
+        
+        test "expanding choose for the second attempt runs the same way" {
+            let actual =
+                choose.Delay(fun () ->
+                    choose.Combine(
+                        choose.ReturnFrom(Some 1),
+                        choose.Delay(fun () ->
+                          printfn "returning first value?"
+                          choose.ReturnFrom(Some 2)
+                        )
+                    )
+                )
+            Expect.equal actual (Some 1) "Expected the first value to be returned."
+        }
     ]
     
