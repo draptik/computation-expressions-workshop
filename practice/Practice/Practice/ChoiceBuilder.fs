@@ -71,5 +71,33 @@ let tests =
             }
             Expect.equal actual (Some 7) "Expected the seventh value to be returned."
         }
+        
+        test "ChoiceBuilder can chain a computation onto another returning None, where None indicates success" {
+            let dirExists path =
+                let fileInfo = System.IO.FileInfo(path)
+                let fileName = fileInfo.Name
+                let pathDir = fileInfo.Directory.FullName.TrimEnd('~')
+                if System.IO.Directory.Exists(pathDir) then
+                    Some (System.IO.Path.Combine(pathDir, fileName))
+                else
+                    None
+                
+            let choosePath = Some "~/test.txt"
+            
+            let writeFile =
+                choose {
+                    let! path = choosePath
+                    let! fullPath = dirExists path
+                    System.IO.File.WriteAllText(fullPath, "Test succeeded")
+                }
+                
+            let actual =
+                choose {
+                    return! writeFile
+                    return "Successfully wrote file"
+                }
+                
+            Expect.equal actual (Some "Successfully wrote file") "Actual should indicate success"
+        }
     ]
     
