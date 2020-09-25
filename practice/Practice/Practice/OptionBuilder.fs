@@ -50,6 +50,9 @@ type OptionBuilder() =
     member __.Bind(m, f) =
         printfn "maybe.Bind(%A, %A)" m f
         Option.bind f m
+    member __.Zero () =
+        printfn "maybe.Zero()"
+        None
     
 let maybe = OptionBuilder()
     
@@ -93,6 +96,40 @@ let tests =
                     )
                 )
             Expect.equal actual composed "Actual should sum to the same value as nested"
+        }
+        
+        test "OptionBuilder can exit without returning a value" {
+            let fullyQualified path =
+                let fileInfo = System.IO.FileInfo(path)
+                let fileName = fileInfo.Name
+                let pathDir = fileInfo.Directory.FullName.TrimEnd('~')
+                if System.IO.Directory.Exists(pathDir) then
+                    Some (System.IO.Path.Combine(pathDir, fileName))
+                else
+                    None
+                    
+            let maybePath = Some "~/test.txt"
+            
+            let actual =
+                maybe {
+                    let! path = maybePath
+                    let! fullPath = fullyQualified path
+                    System.IO.File.WriteAllText(fullPath, "Test succeeded")
+                }
+                
+            Expect.equal actual None "Actual should be None"
+        }
+        
+        test "OptionBuilder supports if then without an else" {
+            let maybePath = Some "~/test.txt"
+            let actual =
+                maybe {
+                    let! path = maybePath
+                    let pathDir = System.IO.Path.GetDirectoryName(path)
+                    if not(System.IO.Directory.Exists(pathDir)) then
+                        return "Select a valid path."
+                }
+            Expect.equal actual (Some "Select a valid path.") "Actual should return Some(\"Select a valid path.\")"
         }
     ]
     
