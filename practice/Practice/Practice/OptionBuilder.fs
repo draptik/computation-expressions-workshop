@@ -53,6 +53,10 @@ type OptionBuilder() =
     member __.Zero () =
         printfn "maybe.Zero()"
         None
+    member __.ReturnFrom(m) =
+        printfn "maybe.ReturnFrom(%A)" m
+        m
+        
     
 let maybe = OptionBuilder()
     
@@ -130,6 +134,23 @@ let tests =
                         return "Select a valid path."
                 }
             Expect.equal actual (Some "Select a valid path.") "Actual should return Some(\"Select a valid path.\")"
+        }
+        
+        test "OptionBuilder allows for early escape with return!" {
+            let actual =
+                maybe {
+                    if true then
+                        return! None
+                    else
+                        let! w = opt1
+                        let! x = opt2
+                        let! y = opt3
+                        let! z = opt4
+                        let result = sum4 w x y z
+                        printfn "Result: %d" result
+                        return result
+                }
+            Expect.equal actual None "Should return None immediately"
         }
     ]
     
