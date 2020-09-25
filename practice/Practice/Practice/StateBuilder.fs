@@ -44,7 +44,12 @@ type StateBuilder () =
     member __.ReturnFrom(m: State<'a, 's>) = m
     member __.Zero() = State.result ()
     member __.Delay(f) = State.bind f (State.result ())
-
+    member inline __.Combine(m1: State<'a, 's>, m2: State<'a, 's>) =
+        fun s ->
+            let v1, s1 = m1 s
+            let v2, s2 = m2 s
+            v1 + v2, s1 + s2
+            
 let state = StateBuilder ()
 
 
@@ -106,6 +111,15 @@ let tests =
             }
             let actual = State.eval c ""
             Expect.equal actual () "Expected the value to be ()."
+        }
+        
+        test "state supports returning multiple values" {
+            let c : State<string, string> = state {
+                return "one"
+                return "two"
+            }
+            let actual = State.eval c ""
+            Expect.equal actual "onetwo" "Expected all returns to be concatenated."
         }
     ]
             
