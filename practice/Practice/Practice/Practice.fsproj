@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <Compile Include="OptionBuilder.fs" />
+        <Compile Include="ChoiceBuilde.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
