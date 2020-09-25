@@ -10,6 +10,7 @@
     <ItemGroup>
         <Compile Include="OptionBuilder.fs" />
         <Compile Include="ChoiceBuilder.fs" />
+        <Compile Include="StateBuilder.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
