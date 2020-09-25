@@ -3,7 +3,7 @@ module Choose
 open Expecto
 open Options
 
-type ChoiceBuilder() =
+type ChoiceBuilderVerbose() =
     inherit OptionBuilder()
     
     member __.Combine(m: 'a option, f: unit -> 'a option) =
@@ -19,6 +19,18 @@ type ChoiceBuilder() =
     member __.Run(f: unit -> 'a option) =
         printfn "choose.Run(%A)" f
         f ()
+
+type ChoiceBuilder() =
+    inherit OptionBuilder()
+    
+    member __.Combine(m: 'a option, f: unit -> 'a option) =
+        match m with
+        | Some _ -> m
+        | None -> f ()
+        
+    member __.Delay(f: unit -> 'a option) = f
+        
+    member __.Run(f: unit -> 'a option) = f ()
 
 let choose = ChoiceBuilder()
 
