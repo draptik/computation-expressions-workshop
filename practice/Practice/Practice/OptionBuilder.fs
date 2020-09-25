@@ -43,7 +43,7 @@ let composed =
         )
     )
 
-type OptionBuilder() =
+type OptionBuilderVerbose() =
     member __.Return(value) =
         printfn "maybe.Return(%A)" value
         Some value
@@ -56,7 +56,22 @@ type OptionBuilder() =
     member __.ReturnFrom(m) =
         printfn "maybe.ReturnFrom(%A)" m
         m
-        
+
+/// Compact version (normal usage)
+type OptionBuilder() =
+
+    // `let!`
+    member __.Bind(m, f) = Option.bind f m
+    
+    // `return`
+    member __.Return(value) = Some value
+    
+    // `return!`
+    member __.ReturnFrom(m) = m
+    
+    // support for "if without else" as well as returning without value
+    member __.Zero () = None
+
     
 let maybe = OptionBuilder()
     
