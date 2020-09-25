@@ -42,6 +42,10 @@ type StateBuilder () =
     member __.Return(value) : State<'a, 's> = State.result value
     member __.Bind(m: State<'a, 's>, f: 'a -> State<'b, 's>) : State<'b, 's> = State.bind f m
     member __.ReturnFrom(m: State<'a, 's>) = m
+    member __.Zero() = State.result ()
+//    member __.Delay(f) = f
+//    member __.Delay(f) = State.bind f (State.result ())
+//    member __.Run(f) = f()
 
 let state = StateBuilder ()
 
@@ -96,5 +100,14 @@ let tests =
             let actual = State.exec c "Hello"
             Expect.equal actual "olleH" "Expected state of \"olleH\"."
         }
+        
+//        test "state supports if ... then with no else" {
+//            let c : State<unit, string> = state {
+//                if true then
+//                    printfn "Hello"
+//            }
+//            let actual = State.eval c ""
+//            Expect.equal actual () "Expected the value to be ()."
+//        }
     ]
             
