@@ -10,6 +10,13 @@ type Microsoft.FSharp.Control.AsyncBuilder with
     member this.Bind(task: System.Threading.Tasks.Task, f) =
         this.Bind(Async.AwaitTask task, f)
         
+type OptionBuilder with
+    member this.Bind(value, f) =
+        this.Bind(Option.ofNullable value, f)
+    member this.Bind(value, f) =
+        this.Bind(Option.ofObj value, f)
+        
+        
 [<Tests>]
 let tests =
     testList "extensions" [
@@ -37,5 +44,25 @@ let tests =
             Expect.equal actual () "Expected async to bind Task"
         }
         
+        test "maybe can bind Nullable<'T>" {
+            let expected = 1
+            let nullable = System.Nullable(1)
+            let actual =
+                maybe {
+                    let! x = nullable
+                    return x
+                }
+            Expect.equal actual (Some expected) "Expected a Nullable 1 to return Some 1"
+        }
+        
+        test "maybe can bind a null object" {
+            let expected : string = null
+            let actual =
+                maybe {
+                    let! x = expected
+                    return x
+                }
+            Expect.equal actual None "Expected a null object to return None"
+        }
     ]
 
