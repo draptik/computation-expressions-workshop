@@ -25,12 +25,20 @@ type MyTestBuilder(name) =
             | null -> ()
             | disp -> disp.Dispose()
             
-    member __.For(sequence, f) =
-        for i in sequence do f i
+    member __.For(items: seq<_>, f) =
+        __.Using(items.GetEnumerator(), fun enum ->
+            __.While((fun () -> enum.MoveNext()),
+                     __.Delay(fun () -> f enum.Current)))
 
-    member __.While(pred, f) =
-        while pred() do f()
-
+    member __.Bind(m: unit -> unit, f) =
+        m()
+        f()
+        
+    member __.While(pred, body) =
+        if pred() then
+            __.Bind(body, (fun () -> __.While(pred, body)))
+        else __.Zero()
+            
 let myTest name = MyTestBuilder(name)
 
 [<AllowNullLiteral>]
@@ -76,7 +84,7 @@ let tests =
         }
         
         myTest "myTest supports for" {
-            for i in 1..10 do
+            for i in [1..10] do
                 Expect.equal i i "i should equal itself within a for loop"
         }
         
