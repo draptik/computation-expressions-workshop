@@ -42,6 +42,21 @@ type RxQueryBuilder() =
     [<CustomOperation("groupBy", AllowIntoPattern=true)>]
     member __.GroupBy (s: IObservable<_>, [<ProjectionParameter>] keySelector: _ -> _) =
         s.GroupBy(Func<_,_>(keySelector))
+        
+    [<CustomOperation("join", IsLikeJoin=true, JoinConditionWord="on")>]
+    member __.Join (s1: IObservable<_>, s2: IObservable<_>,
+                    [<ProjectionParameter>] leftDurationSelector: _ -> _,
+                    [<ProjectionParameter>] rightDurationSelector: _ -> _,
+                    [<ProjectionParameter>] resultSelector: _ -> _) =
+        s1.Join(s2,
+                Func<_,_>(leftDurationSelector),
+                Func<_,_>(rightDurationSelector),
+                Func<_,_,_>(resultSelector))
+        
+    [<CustomOperation("zip", IsLikeZip=true)>]
+    member __.Zip (s1:IObservable<_>, s2:IObservable<_>,
+                   [<ProjectionParameter>] resultSelector : _ -> _) =
+        s1.Zip(s2, Func<_,_,_>(resultSelector))
 
 let rxquery = RxQueryBuilder()
 
@@ -169,5 +184,34 @@ let tests =
                 }
                 |> Observable.subscribe actual.Add
             Expect.equal (actual.ToArray()) expected "Expected where to filter input"
+        }
+        
+        test "rxquery can join two observables" {
+            let actual = ResizeArray<int * int>()
+            let source1 = Observable.Range(1, 5)
+            let source2 = Observable.Range(3, 5)
+            use disp =
+                rxquery {
+                    for x in source1 do
+                    join y in source2 on ((Observable.Timer(TimeSpan.FromMilliseconds 0.)) = (Observable.Timer(TimeSpan.FromMilliseconds 0.)))
+                    select (x,y)
+                }
+                |> Observable.subscribe actual.Add
+            Expect.isGreaterThan (Array.length (actual.ToArray())) 1 "Expected join to produce a sequence longer than 1 value"
+        }
+        
+        test "rxquery can zip two observables" {
+            let expected = [|1,3;2,4;3,5;4,6;5,7|]
+            let actual = ResizeArray<int * int>()
+            let source1 = Observable.Range(1, 5)
+            let source2 = Observable.Range(3, 5)
+            use disp =
+                rxquery {
+                    for x in source1 do
+                    zip y in source2
+                    select (x,y)
+                }
+                |> Observable.subscribe actual.Add
+            Expect.equal (actual.ToArray()) expected "Expected join to produce [|1,3;2,4;3,5;4,6;5,7|]"
         }
     ]
