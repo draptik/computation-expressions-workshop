@@ -15,8 +15,30 @@ type MyTestBuilder(name) =
     member __.Combine(f1: 'a, f2: unit -> unit) =
         f2()
         f1
+        
+    // doesn't seem to be needed
+    member __.Using(disposable: #System.IDisposable, f) =
+        try
+            f disposable
+        finally
+            match disposable with
+            | null -> ()
+            | disp -> disp.Dispose()
+            
+    member __.For(sequence, f) =
+        for i in sequence do f i
+
+    member __.While(pred, f) =
+        while pred() do f()
 
 let myTest name = MyTestBuilder(name)
+
+[<AllowNullLiteral>]
+type ObservableDisposable() =
+    member val IsDisposed = false with get, set
+    interface System.IDisposable with
+        member this.Dispose() =
+            this.IsDisposed <- true
 
 [<Tests>]
 let tests =
@@ -44,6 +66,25 @@ let tests =
             finally
                 calledFinally <- true
             Expect.isTrue calledFinally "Expected test to call finally block"
+        }
+        
+        myTest "myTest support use" {
+            let disp = new ObservableDisposable()
+            do use d = disp
+               ()
+            Expect.isTrue disp.IsDisposed "Expected the instance to be disposed"
+        }
+        
+        myTest "myTest supports for" {
+            for i in 1..10 do
+                Expect.equal i i "i should equal itself within a for loop"
+        }
+        
+        myTest "myTest supports while" {
+            let mutable i = 1
+            while i <= 10 do
+                Expect.equal i i "i should equal itself within a for loop"
+                i <- i + 1
         }
     ]
     
