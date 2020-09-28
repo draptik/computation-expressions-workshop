@@ -13,6 +13,7 @@
         <Compile Include="StateBuilder.fs" />
         <Compile Include="Sequences.fs" />
         <Compile Include="ExceptionsLoopsDisposal.fs" />
+        <Compile Include="Extensions.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
