@@ -28,6 +28,14 @@ type RxQueryBuilder() =
     [<CustomOperation("select")>]
     member __.Select(s: IObservable<_>, [<ProjectionParameter>] selector: _ -> _) =
         s.Select(selector)
+        
+    [<CustomOperation("head")>]
+    member __.Head (s: IObservable<_>) = s.FirstAsync()
+    
+    [<CustomOperation("exactlyOne")>]
+    member __.ExactlyOne (s: IObservable<_>) = s.SingleAsync()
+    
+    
 
 let rxquery = RxQueryBuilder()
 
@@ -97,5 +105,29 @@ let tests =
                 }
                 |> Observable.subscribe (fun i -> actual.[i - 1] <- i)
             Expect.equal actual expected "Expected observable to populate empty array with selected values"
+        }
+        
+        test "rxquery can return the first value from a source" {
+            let mutable actual : int = -1
+            let source = Observable.Range(1, 10)
+            use disp =
+                rxquery {
+                    for x in source do
+                    head
+                }
+                |> Observable.subscribe (fun i -> actual <- i)
+            Expect.equal actual 1 "Expected head to return 1"
+        }
+
+        test "rxquery can return the single value from a source of one element" {
+            let mutable actual : int = -1
+            let source = Observable.Return(1)
+            use disp =
+                rxquery {
+                    for x in source do
+                    exactlyOne
+                }
+                |> Observable.subscribe (fun i -> actual <- i)
+            Expect.equal actual 1 "Expected exactlyOne to return 1"
         }        
     ]
