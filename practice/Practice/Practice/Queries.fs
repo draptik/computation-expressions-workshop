@@ -35,7 +35,13 @@ type RxQueryBuilder() =
     [<CustomOperation("exactlyOne")>]
     member __.ExactlyOne (s: IObservable<_>) = s.SingleAsync()
     
+    [<CustomOperation("where", MaintainsVariableSpace=true)>]
+    member __.Where (s: IObservable<_>, [<ProjectionParameter>] predicate: _ -> bool) =
+        s.Where(predicate)
     
+    [<CustomOperation("groupBy", AllowIntoPattern=true)>]
+    member __.GroupBy (s: IObservable<_>, [<ProjectionParameter>] keySelector: _ -> _) =
+        s.GroupBy(Func<_,_>(keySelector))
 
 let rxquery = RxQueryBuilder()
 
@@ -129,5 +135,39 @@ let tests =
                 }
                 |> Observable.subscribe (fun i -> actual <- i)
             Expect.equal actual 1 "Expected exactlyOne to return 1"
-        }        
+        }
+        
+        test "rxquery can filter an observable with where" {
+            let expected = [|1..5|]
+            let actual = Array.zeroCreate<int> 5
+            let source = Observable.Range(1, 10)
+            use disp =
+                rxquery {
+                    for x in source do
+                    where (x <= 5)
+                    select x
+                }
+                |> Observable.subscribe (fun i -> actual.[i - 1] <- i)
+            Expect.equal actual expected "Expected where to filter input"
+        }
+        
+        test "rxquery can group an observable" {
+            let expected = [|"a";"b"|]
+            let actual = ResizeArray<string>()
+            let source =
+                Observable.Generate(1,
+                    (fun x -> x < 10),
+                    (fun x -> x + 1),
+                    (fun x ->
+                        if x < 2 then "a", x
+                        else "b", x))
+            use disp =
+                rxquery {
+                    for (k, _) in source do
+                    groupBy k into g
+                    select g.Key
+                }
+                |> Observable.subscribe actual.Add
+            Expect.equal (actual.ToArray()) expected "Expected where to filter input"
+        }
     ]
